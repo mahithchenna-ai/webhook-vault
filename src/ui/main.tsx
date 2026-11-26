@@ -1,3 +1,6 @@
 import { render } from 'preact'
+import { App } from './App.js'
+import './styles/theme.css'
+import './styles/global.css'
 
-render(<div>webhook-vault</div>, document.getElementById('app')!)
+render(<App />, document.getElementById('app')!)

@@ -1,7 +1,16 @@
+import { existsSync, readFileSync } from 'node:fs'
+import path from 'node:path'
 import bodyParser from 'body-parser'
 import type { NextFunction, Request, RequestHandler, Response } from 'express'
-import { DEFAULT_BODY_SIZE_LIMIT_BYTES, DEFAULT_VAULT_DIR, type VaultConfig } from '../core/config.js'
+import {
+  DEFAULT_BODY_SIZE_LIMIT_BYTES,
+  DEFAULT_DASHBOARD_PORT,
+  DEFAULT_VAULT_DIR,
+  type ChaosConfig,
+  type VaultConfig,
+} from '../core/config.js'
 import type { CapturedEvent, NewCapturedEvent, SignatureStatus } from '../core/events.js'
+import { VaultServer } from '../core/sse.js'
 import { VaultStorage } from '../core/storage.js'
 import { verifyWebhook } from '../signing/index.js'
 import {
@@ -20,8 +29,19 @@ export interface VaultMiddlewareOptions extends VaultConfig {
 
 export interface VaultMiddleware extends RequestHandler {
   storage: VaultStorage
-  close: () => void
+  server?: VaultServer
+  close: () => Promise<void> | void
   __isWebhookVault: true
+}
+
+function readChaosConfig(dir: string): ChaosConfig | null {
+  const chaosPath = path.join(dir, 'chaos.json')
+  if (!existsSync(chaosPath)) return null
+  try {
+    return JSON.parse(readFileSync(chaosPath, 'utf8')) as ChaosConfig
+  } catch {
+    return null
+  }
 }
 
 export function vault(options: VaultMiddlewareOptions = {}): VaultMiddleware {
@@ -36,7 +56,30 @@ export function vault(options: VaultMiddlewareOptions = {}): VaultMiddleware {
   const extraRedactions = options.redactHeaders ?? []
   const secrets = options.secrets ?? {}
   const storage = options.storage ?? new VaultStorage(dir, { bodySizeLimitBytes })
-  const onEvent = options.onEvent ?? (() => {})
+
+  const isTestEnv = process.env.NODE_ENV === 'test' || Boolean(process.env.VITEST)
+  const shouldStartDashboard =
+    options.enableDashboard === true ||
+    options.dashboardPort !== undefined ||
+    (!isTestEnv && options.enableDashboard !== false)
+
+  let server: VaultServer | undefined
+  if (shouldStartDashboard) {
+    server = new VaultServer({
+      storage,
+      dir,
+      port: options.dashboardPort ?? DEFAULT_DASHBOARD_PORT,
+      secrets,
+    })
+    void server.start().catch(() => {
+      // If port 4400 is already bound by `webhook-vault ui`, continue without crashing host app.
+    })
+  }
+
+  const onEvent = (event: CapturedEvent): void => {
+    server?.broadcast(event)
+    options.onEvent?.(event)
+  }
 
   const rawBodyParser = bodyParser.raw({
     type: '*/*',
@@ -128,7 +171,26 @@ export function vault(options: VaultMiddlewareOptions = {}): VaultMiddleware {
         next(parseErr)
         return
       }
-      next()
+
+      const chaos = readChaosConfig(dir)
+      if (!chaos || ((chaos.delayMs ?? 0) <= 0 && (chaos.failRate ?? 0) <= 0)) {
+        next()
+        return
+      }
+
+      const proceed = (): void => {
+        if ((chaos.failRate ?? 0) > 0 && Math.random() < (chaos.failRate ?? 0)) {
+          res.status(503).json({ error: 'webhook-vault chaos simulated failure' })
+          return
+        }
+        next()
+      }
+
+      if ((chaos.delayMs ?? 0) > 0) {
+        setTimeout(proceed, chaos.delayMs)
+      } else {
+        proceed()
+      }
     }
 
     rawBodyParser(req, res, (err?: unknown) => {
@@ -137,8 +199,10 @@ export function vault(options: VaultMiddlewareOptions = {}): VaultMiddleware {
   } as VaultMiddleware
 
   webhookVaultMiddleware.storage = storage
-  webhookVaultMiddleware.close = () => {
+  webhookVaultMiddleware.server = server
+  webhookVaultMiddleware.close = async () => {
     storage.close()
+    await server?.stop()
   }
   webhookVaultMiddleware.__isWebhookVault = true
 

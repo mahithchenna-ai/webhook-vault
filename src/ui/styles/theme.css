@@ -1,0 +1,41 @@
+:root {
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --surface-alt: #f1f5f9;
+  --border: #e2e8f0;
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --accent: #2563eb;
+  --accent-contrast: #ffffff;
+  --ok: #15803d;
+  --ok-bg: #dcfce7;
+  --warn: #b45309;
+  --warn-bg: #fef3c7;
+  --err: #b91c1c;
+  --err-bg: #fee2e2;
+  --diff-add-bg: #dcfce7;
+  --diff-del-bg: #fee2e2;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b1120;
+    --surface: #111827;
+    --surface-alt: #1e293b;
+    --border: #334155;
+    --text: #f8fafc;
+    --text-muted: #94a3b8;
+    --accent: #3b82f6;
+    --accent-contrast: #ffffff;
+    --ok: #4ade80;
+    --ok-bg: rgba(21, 128, 61, 0.22);
+    --warn: #fbbf24;
+    --warn-bg: rgba(180, 83, 9, 0.24);
+    --err: #f87171;
+    --err-bg: rgba(185, 28, 28, 0.24);
+    --diff-add-bg: rgba(21, 128, 61, 0.25);
+    --diff-del-bg: rgba(185, 28, 28, 0.25);
+  }
+}
