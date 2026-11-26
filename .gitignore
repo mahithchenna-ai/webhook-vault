@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.webhook-vault/
+*.db
+.env
+coverage/
+*.tgz

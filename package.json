@@ -1,0 +1,87 @@
+{
+  "name": "webhook-vault",
+  "version": "0.1.0",
+  "description": "Local-first webhook capture, signed-replay and failure-simulation toolkit for Node.js",
+  "type": "module",
+  "main": "./dist/core/index.cjs",
+  "module": "./dist/core/index.js",
+  "types": "./dist/core/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/core/index.d.ts",
+      "import": "./dist/core/index.js",
+      "require": "./dist/core/index.cjs"
+    },
+    "./express": {
+      "types": "./dist/express/index.d.ts",
+      "import": "./dist/express/index.js",
+      "require": "./dist/express/index.cjs"
+    },
+    "./test": {
+      "types": "./dist/test/index.d.ts",
+      "import": "./dist/test/index.js",
+      "require": "./dist/test/index.cjs"
+    }
+  },
+  "bin": {
+    "webhook-vault": "./dist/cli/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup && npm run build:ui",
+    "build:ui": "vite build --config src/ui/vite.config.ts",
+    "test": "vitest run",
+    "lint": "eslint src tests",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "keywords": [
+    "webhook",
+    "stripe",
+    "github",
+    "razorpay",
+    "express",
+    "replay",
+    "testing",
+    "local-first"
+  ],
+  "author": "Mahith Chenna",
+  "license": "MIT",
+  "dependencies": {
+    "better-sqlite3": "^11.0.0",
+    "body-parser": "^1.20.3",
+    "express": "^4.21.1",
+    "nanoid": "^5.0.8"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.9.0",
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/body-parser": "^1.19.5",
+    "@types/canvas-confetti": "^1.6.4",
+    "@types/express": "^5.0.0",
+    "@types/minimist": "^1.2.5",
+    "@types/node": "^22.0.0",
+    "@types/supertest": "^6.0.2",
+    "@typescript-eslint/eslint-plugin": "^8.15.0",
+    "@typescript-eslint/parser": "^8.15.0",
+    "@vitest/coverage-v8": "^2.1.4",
+    "canvas-confetti": "^1.9.3",
+    "eslint": "^9.15.0",
+    "minimist": "^1.2.8",
+    "preact": "^10.24.3",
+    "prettier": "^3.3.3",
+    "supertest": "^7.0.0",
+    "tsup": "^8.3.5",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11",
+    "vitest": "^2.1.4"
+  }
+}
