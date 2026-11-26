@@ -13,4 +13,5 @@ export default defineConfig({
   clean: true,
   splitting: false,
   shims: true,
+  external: ['supertest'],
 })
